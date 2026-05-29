@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-i18n="page_title">Aco Recycling — Thermal Printer Service</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Aco Recycling <span class="sub" data-i18n="brand_sub">Thermal Printer Service</span></h1>
+    <div id="banner" class="banner hidden"></div>
+    <div class="lang-picker">
+      <label>
+        🌐
+        <select id="langPicker">
+          <option value="en">English</option>
+          <option value="tr">Türkçe</option>
+        </select>
+      </label>
+    </div>
+  </header>
+
+  <main>
+    <section class="grid">
+      <!-- Left column: Connection + Print form -->
+      <div class="column">
+        <div class="card" id="connectCard">
+          <h2 data-i18n="conn_title">Connection</h2>
+          <div class="row">
+            <label><span data-i18n="conn_mode">Mode</span>
+              <select id="modeSelect">
+                <option value="lan_direct" data-i18n="conn_mode_lan_direct">LAN — auto-detect direct cable</option>
+                <option value="lan" data-i18n="conn_mode_lan">LAN (manual host)</option>
+                <option value="usb" data-i18n="conn_mode_usb">USB</option>
+              </select>
+            </label>
+            <button id="connectBtn" class="primary" data-i18n="conn_btn_connect">Connect</button>
+            <button id="disconnectBtn" class="secondary" data-i18n="conn_btn_disconnect">Disconnect</button>
+          </div>
+
+          <div class="params-lan_direct">
+            <div class="row">
+              <label class="grow"><span data-i18n="conn_eth_detected">Detected Ethernet devices</span>
+                <select id="lanDirectSelect">
+                  <option value="" data-i18n="conn_scanning">— scanning… —</option>
+                </select>
+              </label>
+              <button id="refreshLanDirectBtn" class="secondary small" type="button" data-i18n="conn_btn_refresh">↻ Refresh</button>
+            </div>
+            <p class="hint" style="margin-top:-4px;" data-i18n-html="conn_eth_hint">
+              Plug the printer into your Ethernet port. The service
+              scans every wired interface and lists Cashino-shaped
+              listeners here — pick one and press <strong>Connect</strong>.
+              In <code>DEV_MODE</code> the local mock device shows up so
+              you can rehearse the flow without a cable.
+            </p>
+          </div>
+
+          <div class="row params-lan">
+            <label class="grow"><span data-i18n="conn_lan_host">Host (IP)</span>
+              <input id="lanHost" placeholder="192.168.1.50 or 127.0.0.1" data-i18n-placeholder="conn_lan_host_ph">
+            </label>
+            <label><span data-i18n="conn_lan_port">Port</span>
+              <input id="lanPort" type="number" value="9100" min="1" max="65535">
+            </label>
+          </div>
+          <div class="row params-lan">
+            <button id="lanDiscoverBtn" class="secondary small" type="button" data-i18n="conn_lan_discover_btn">⇲ Discover devices on LAN</button>
+            <span id="lanDiscoverStatus" class="hint" style="margin-left:8px;"></span>
+          </div>
+          <ul id="lanDiscoverResults" class="discover-list params-lan hidden"></ul>
+
+          <div class="params-usb" hidden>
+            <div class="row">
+              <label class="grow"><span data-i18n="conn_usb_cdc_detected">Detected USB-CDC devices</span>
+                <select id="usbCdcSelect">
+                  <option value="" data-i18n="conn_scanning">— scanning… —</option>
+                </select>
+              </label>
+              <button id="refreshUsbBtn" class="secondary small" type="button" data-i18n="conn_btn_refresh">↻ Refresh</button>
+            </div>
+            <div class="row">
+              <label class="grow"><span data-i18n="conn_usb_cdc_path">USB-CDC device path</span>
+                <input id="usbDevicePath" placeholder="/tmp/mock-printer-usb or /dev/cu.usbserial-XXXX" data-i18n-placeholder="conn_usb_cdc_path_ph">
+              </label>
+            </div>
+            <p class="hint" style="margin-top:-4px;" data-i18n="conn_usb_cdc_hint">Pick from the dropdown above or type a path manually. Uses pyserial (USB-CDC), works for most Cashino USB printers.</p>
+
+            <div class="row">
+              <label class="grow"><span data-i18n="conn_usb_libusb_detected">Detected libusb devices</span>
+                <select id="usbLibSelect">
+                  <option value="" data-i18n="conn_scanning">— scanning… —</option>
+                </select>
+              </label>
+            </div>
+            <div class="row">
+              <label><span data-i18n="conn_usb_vid">Vendor ID (hex)</span>
+                <input id="usbVendor" placeholder="0x0fe6">
+              </label>
+              <label><span data-i18n="conn_usb_pid">Product ID (hex)</span>
+                <input id="usbProduct" placeholder="0x811e">
+              </label>
+            </div>
+            <p class="hint" style="margin-top:-4px;" data-i18n="conn_usb_libusb_hint">libusb fallback for vendor-class devices (no USB-CDC endpoint). Leave the path above empty to use this.</p>
+          </div>
+
+          <p class="hint" data-i18n-html="conn_env_fallback_hint">Empty fields fall back to <code>.env</code> values. On mock backend the parameters are recorded but ignored (one simulated device serves both modes).</p>
+        </div>
+
+        <div class="card">
+          <h2 data-i18n="print_title">Print Receipt</h2>
+          <div class="row">
+            <label><span data-i18n="print_machine_id">Machine ID</span>
+              <input id="machineId" value="ACO-TEST-0001-0001">
+            </label>
+            <label><span data-i18n="print_receipt_lang">Receipt language</span>
+              <select id="lang"><option value="en" selected>en</option><option value="tr">tr</option></select>
+            </label>
+          </div>
+          <div class="row">
+            <label><span data-i18n="print_field_title">Title</span>
+              <input id="title" value="Aco Recycling Default Reward">
+            </label>
+            <label><span data-i18n="print_total_reward">Total Reward (TL)</span>
+              <input id="totalReward" type="number" step="0.01" value="3.00">
+            </label>
+          </div>
+          <table id="itemsTable">
+            <thead><tr>
+              <th data-i18n="print_th_product">Product</th>
+              <th data-i18n="print_th_qty">Qty</th>
+              <th data-i18n="print_th_reward">Reward</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="itemsBody"></tbody>
+          </table>
+          <button id="addItemBtn" class="secondary small" data-i18n="print_btn_add_item">+ item</button>
+          <div class="row">
+            <label><span data-i18n="print_qr_content">QR content (optional)</span>
+              <input id="qrContent" value="ACO-TEST-0001-0001|3.00|TL">
+            </label>
+          </div>
+          <div class="row">
+            <label class="grow"><span data-i18n="print_image_field">Image (optional, &lt; 2MB PNG/JPG)</span>
+              <input id="imageFile" type="file" accept="image/png,image/jpeg,image/bmp">
+            </label>
+          </div>
+          <div class="row">
+            <button id="printTextBtn" class="primary" data-i18n="print_btn_text">Print Text</button>
+            <button id="printImageBtn" data-i18n="print_btn_image">Print with Image</button>
+          </div>
+
+          <!-- Reprint by UUID — paste/pick a specific job, or fire
+               "Reprint last failed" without thinking about the ID. -->
+          <h3 style="margin: 14px 0 6px; font-size: 13px;" data-i18n="reprint_section">Reprint</h3>
+          <div class="row">
+            <label class="grow"><span data-i18n="reprint_recent_label">Recent failures</span>
+              <select id="failedJobSelect">
+                <option value="" data-i18n="reprint_recent_loading">— loading… —</option>
+              </select>
+            </label>
+            <button id="refreshFailedBtn" class="secondary small" type="button" data-i18n="conn_btn_refresh">↻ Refresh</button>
+          </div>
+          <div class="row">
+            <label class="grow"><span data-i18n="reprint_uuid_label">Job UUID</span>
+              <input id="reprintUuidInput" placeholder="8580b2d9-…" data-i18n-placeholder="reprint_uuid_ph">
+            </label>
+            <button id="reprintByUuidBtn" class="secondary" data-i18n="reprint_btn_by_uuid">Reprint by UUID</button>
+          </div>
+          <div class="row">
+            <button id="reprintBtn" class="secondary" data-i18n="print_btn_reprint">Reprint last failed</button>
+            <span id="reprintHint" class="hint" style="margin-left:8px;" data-i18n="reprint_hint_last">No UUID needed — server picks the most recent failure.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column: Status + Logs -->
+      <div class="column">
+        <div class="card" id="statusCard">
+          <h2><span data-i18n="status_title">Status</span> <span id="stateChip" class="chip">…</span></h2>
+          <dl class="status">
+            <dt data-i18n="status_mode">Mode</dt><dd id="sMode">-</dd>
+            <dt data-i18n="status_connected">Connected</dt><dd id="sConnected">-</dd>
+            <dt data-i18n="status_disconnect_reason">Disconnect reason</dt><dd id="sReason">-</dd>
+            <dt data-i18n="status_paper">Paper</dt><dd id="sPaper">-</dd>
+            <dt data-i18n="status_cover">Cover</dt><dd id="sCover">-</dd>
+            <dt data-i18n="status_temp">Temperature</dt><dd id="sTemp">-</dd>
+            <dt data-i18n="status_overheated">Overheated</dt><dd id="sOverheat">-</dd>
+            <dt data-i18n="status_jammed">Jammed</dt><dd id="sJam">-</dd>
+            <dt data-i18n="status_last_seen">Last seen</dt><dd id="sLastSeen">-</dd>
+          </dl>
+          <h3 data-i18n="status_last_job">Last Job</h3>
+          <dl class="status">
+            <dt data-i18n="status_lj_id">ID</dt><dd id="ljId">-</dd>
+            <dt data-i18n="status_lj_op">Op</dt><dd id="ljOp">-</dd>
+            <dt data-i18n="status_lj_status">Status</dt><dd id="ljStatus">-</dd>
+            <dt data-i18n="status_lj_error">Error</dt><dd id="ljError">-</dd>
+            <dt data-i18n="status_lj_at">At</dt><dd id="ljTs">-</dd>
+          </dl>
+
+          <h3><span data-i18n="status_eta">ETA</span> <span class="chip muted" id="etaChip" data-i18n="status_eta_avg">moving avg ·10</span></h3>
+          <dl class="status">
+            <dt data-i18n="status_eta_text">Print (text)</dt><dd id="etaText">—</dd>
+            <dt data-i18n="status_eta_image">Print (image)</dt><dd id="etaImage">—</dd>
+          </dl>
+
+          <h3 id="reconnectHeader" class="hidden">
+            <span data-i18n="status_reconnect">Auto-reconnect</span> <span id="reconnectChip" class="chip">…</span>
+          </h3>
+          <dl id="reconnectDl" class="status hidden">
+            <dt data-i18n="status_rc_attempt">Attempt</dt><dd id="rcAttempt">-</dd>
+            <dt data-i18n="status_rc_next">Next retry in</dt><dd id="rcNext">-</dd>
+            <dt data-i18n="status_rc_last_ts">Last try at</dt><dd id="rcLastTs">-</dd>
+            <dt data-i18n="status_rc_last_error">Last error</dt><dd id="rcError" style="word-break:break-word;">-</dd>
+          </dl>
+        </div>
+
+        <div class="card" id="previewCard">
+          <h2><span data-i18n="preview_title">Last Receipt</span>
+            <button id="refreshPreviewBtn" class="secondary small" data-i18n="preview_btn_refresh">Refresh</button>
+            <button id="toggleRawBtn" class="secondary small" data-i18n="preview_btn_raw">Raw</button>
+            <span id="previewMeta" class="chip">—</span></h2>
+          <p class="hint" data-i18n="preview_hint">Visual preview of what the thermal printer would emit (center / bold / double-size applied, QR shown as a box). Updates after each print.</p>
+          <div id="receiptPaper" class="receipt-paper">
+            <div id="receiptRendered" class="receipt-rendered" data-i18n="preview_empty">(no receipt yet)</div>
+          </div>
+          <pre id="receiptRaw" class="receipt hidden" data-i18n="preview_empty">(no receipt yet)</pre>
+        </div>
+
+        <div class="card" id="devToolsCard" hidden>
+          <h2><span data-i18n="dev_title">Dev Tools</span>
+            <span class="chip warn">DEV_MODE</span>
+            <span id="mockDeviceChip" class="chip" data-i18n="dev_mock_device_label">mock device: …</span>
+          </h2>
+          <p class="hint" id="mockDeviceHint" data-i18n="dev_hint">Inject scenarios into the mock printer.</p>
+          <div id="mockDeviceOfflineBanner" class="banner warn hidden" data-i18n-html="dev_mock_offline">
+            Mock device service is configured but offline.
+            Start it with <code>python scripts/mock_device_server.py</code>.
+          </div>
+          <div class="row">
+            <label><span data-i18n="dev_paper">Paper lines</span> <input id="devPaper" type="number" value="200" min="0" max="1000"></label>
+            <button data-action="set_paper" data-i18n="dev_btn_apply">Apply</button>
+          </div>
+          <div class="row">
+            <label><span data-i18n="dev_temp">Temperature °C</span> <input id="devTemp" type="number" value="25" min="20" max="100" step="0.5"></label>
+            <button data-action="set_temperature" data-i18n="dev_btn_apply">Apply</button>
+          </div>
+          <div class="row">
+            <label><span data-i18n="dev_cover">Cover</span> <select id="devCover"><option value="false" data-i18n="dev_cover_closed">closed</option><option value="true" data-i18n="dev_cover_open">open</option></select></label>
+            <button data-action="set_cover" data-i18n="dev_btn_apply">Apply</button>
+          </div>
+          <div class="row">
+            <label><span data-i18n="dev_jammed">Jammed</span> <select id="devJam"><option value="false" data-i18n="dev_no">no</option><option value="true" data-i18n="dev_yes">yes</option></select></label>
+            <button data-action="set_jammed" data-i18n="dev_btn_apply">Apply</button>
+          </div>
+          <div class="row">
+            <label><span data-i18n="dev_comm_error">Comm error</span> <select id="devComm"><option value="false" data-i18n="dev_off">off</option><option value="true" data-i18n="dev_on">on</option></select></label>
+            <button data-action="trigger_comm_error" data-i18n="dev_btn_apply">Apply</button>
+          </div>
+          <div class="row">
+            <label class="grow"><span data-i18n="dev_scenario">Scenario</span>
+              <select id="devScenario">
+                <option value="paper_out" data-i18n="dev_sc_paper_out">Paper out</option>
+                <option value="cover_open" data-i18n="dev_sc_cover_open">Cover open</option>
+                <option value="jam" data-i18n="dev_sc_jam">Jam</option>
+                <option value="overheat" data-i18n="dev_sc_overheat">Overheat</option>
+                <option value="comm_drop" data-i18n="dev_sc_comm_drop">Comm drop</option>
+                <option value="recover_all" data-i18n="dev_sc_recover_all">Recover all</option>
+              </select>
+            </label>
+            <label><span data-i18n="dev_auto_recover">Auto-recover after (ms)</span> <input id="devAutoRecover" type="number" placeholder="off" data-i18n-placeholder="dev_off" min="100" max="60000"></label>
+            <button id="runScenarioBtn" class="primary" data-i18n="dev_btn_run_scenario">Run scenario</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2><span data-i18n="logs_title">Logs</span> <button id="exportCsvBtn" class="secondary small" data-i18n="logs_btn_export">Export CSV</button></h2>
+          <pre id="logs" class="logs" data-i18n="logs_loading">loading…</pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

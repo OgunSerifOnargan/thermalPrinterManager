@@ -1,0 +1,47 @@
+# Aco Recycling — standalone mock thermal-printer device.
+#
+# This container runs scripts/mock_device_server.py, which simulates a
+# Cashino KP-302 closely enough to drive the service over LAN:
+#   * TCP 9100 — raw ESC/POS port (LanTransport target)
+#   * HTTP 9101 — control / scenario API + dashboard
+#
+# PTY USB-CDC bridge (--enable-pty) is NOT enabled here because PTYs are
+# host-kernel resources; in Docker we expose USB-CDC only on the host
+# directly. For container-only demos, use TCP via service ENV
+# `LAN_HOST=mock-device LAN_PORT=9100`.
+
+FROM python:3.13-slim
+
+RUN groupadd -r aco && useradd -r -g aco -d /app -s /sbin/nologin aco
+
+WORKDIR /app
+
+# Reuse the same requirements.txt — the mock uses Pillow/Pydantic/FastAPI
+# (control API) just like the service. Keeping a single dependency surface
+# makes the dev environment simpler and the image cache hits one layer.
+COPY requirements.txt ./
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# The mock imports app.devices.mock_printer (the brain), so we need the
+# app/ tree — but only the device + core packages, not the service.
+# Copying the whole app/ is fine and keeps the build simple.
+COPY app/        app/
+COPY scripts/mock_device_server.py scripts/
+
+RUN chown -R aco:aco /app
+
+USER aco
+
+EXPOSE 9100 9101
+
+# TCP-only health probe: if the printer port accepts a connection, the
+# mock event loop is alive. Cheap and sufficient for compose dependency.
+HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=3 \
+  CMD python -c "import socket,sys; s=socket.socket(); s.settimeout(2); s.connect(('127.0.0.1',9100)); s.close()" \
+  || exit 1
+
+CMD ["python", "scripts/mock_device_server.py", \
+     "--tcp-host", "0.0.0.0", "--tcp-port", "9100", \
+     "--http-host", "0.0.0.0", "--http-port", "9101", \
+     "--no-pty"]

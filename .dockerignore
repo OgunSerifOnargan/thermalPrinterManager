@@ -1,0 +1,44 @@
+# Keep the build context small and reproducible.
+
+# Virtualenv / Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local data / logs (volume-mounted at runtime instead)
+logs/
+data/
+jobs/
+jobs.db
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# Tests aren't needed at runtime
+tests/
+
+# IDE / OS metadata
+.idea/
+.vscode/
+.DS_Store
+
+# Docs / planning aren't shipped in the image
+docs/
+projectPlan/
+Question/
+thermalPrinterDocs/
+*.md
+!README.md
+
+# Git / CI
+.git/
+.gitignore
+.github/
+
+# Local env files (use compose env or -e flags)
+.env

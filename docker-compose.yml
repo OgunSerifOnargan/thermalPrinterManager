@@ -1,0 +1,60 @@
+# Aco Recycling — full demo stack.
+#
+#   docker compose up -d                # bring everything up
+#   open http://localhost:8000/ui/      # service UI
+#   open http://localhost:9101/         # mock device dashboard
+#
+# The service points at the mock by default. To drive a real Cashino
+# instead, stop the mock container and set LAN_HOST in this file (or
+# in an .env file) to the printer's IP. USB is not supported in Docker
+# on macOS/Windows; for USB use the host setup (./setup.sh + uvicorn).
+
+services:
+  mock-device:
+    build:
+      context: .
+      dockerfile: Dockerfile.mock
+    container_name: aco-mock
+    ports:
+      - "9100:9100"   # raw ESC/POS port
+      - "9101:9101"   # control API + dashboard
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import socket,sys;s=socket.socket();s.settimeout(2);s.connect(('127.0.0.1',9100));s.close()"
+      interval: 10s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+
+  service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aco-service
+    ports:
+      - "8000:8000"
+    depends_on:
+      mock-device:
+        condition: service_healthy
+    environment:
+      # Route LAN transport at the mock container via compose DNS.
+      TRANSPORT_BACKEND: real
+      DEFAULT_MODE: lan
+      LAN_HOST: mock-device
+      LAN_PORT: "9100"
+      MOCK_DEVICE_CONTROL_URL: http://mock-device:9101
+      # Sensible app defaults; override here if needed.
+      DEV_MODE: "true"
+      LOG_LEVEL: INFO
+      JOB_RETENTION_DAYS: "7"
+      PRINT_RATE_LIMIT_PER_MIN: "10"
+      WAIT_FOR_PRINT_DONE: "true"
+      LOCAL_TIMEZONE: Europe/Istanbul
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    restart: unless-stopped

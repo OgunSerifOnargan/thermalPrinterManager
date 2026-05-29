@@ -1,0 +1,10 @@
+# Udev rule granting non-root access to the Cashino ESC/POS thermal printer.
+# Drop into /etc/udev/rules.d/, then:
+#   sudo udevadm control --reload-rules && sudo udevadm trigger
+#
+# Replace VENDOR/PRODUCT with values from `lsusb` (e.g. 0fe6:811e).
+# Default below matches typical Cashino KP-300/302 VID/PID range.
+SUBSYSTEM=="usb", ATTR{idVendor}=="0fe6", ATTR{idProduct}=="811e", MODE="0660", GROUP="plugdev"
+SUBSYSTEM=="usb", ATTR{idVendor}=="0fe6", ATTR{idProduct}=="8800", MODE="0660", GROUP="plugdev"
+# Also allow lp group for compatibility with CUPS pickups
+SUBSYSTEM=="usb", ATTR{idVendor}=="0fe6", MODE="0660", GROUP="lp"

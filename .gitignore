@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+
+# Project
+.env
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+logs/
+jobs/
+*.log
+data/
+
+# Vendor reference docs (Cashino manuals — not redistributed)
+thermalPrinterDocs/
+
+# Personal interview rehearsal material — never committed
+interview-prep/
+
+# Internal design records and session notes — not part of the deliverable
+projectPlan/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
